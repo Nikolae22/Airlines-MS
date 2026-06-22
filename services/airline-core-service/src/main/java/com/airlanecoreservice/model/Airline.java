@@ -1,0 +1,63 @@
+package com.airlanecoreservice.model;
+
+import com.embeddable.Support;
+import com.enums.AirlineStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Entity
+@EntityListeners(AuditingEntityListener.class)
+public class Airline {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true,nullable = false)
+    private String iataCode;
+
+    @Column(unique = true,nullable = false)
+    private String icaoCode;
+
+    @Column(nullable = false)
+    private Long ownerId;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String alias;
+
+    private String logoUrl;
+
+    private String website;
+
+    @Embedded
+    private Support support;
+
+    @Enumerated(value = EnumType.STRING)
+    private AirlineStatus status=AirlineStatus.ACTIVE;
+
+    private String alliance;
+
+    private Long headquarterCityId;
+
+    private Long updatedById;
+
+    @CreatedDate
+    @Column(updatable = false, nullable = false)
+     private Instant createdAt;
+
+    @LastModifiedDate
+    @Column(nullable = false)
+    private Instant updatedAt;
+}

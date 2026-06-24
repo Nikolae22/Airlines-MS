@@ -41,7 +41,7 @@ public class CityServiceImpl implements CityService {
     public CityResponse updateCity(Long id, CityRequest request) throws Exception {
         City city=  cityRepository.findById(id)
                 .orElseThrow(()->new Exception("City not exit with given id"));
-        if (cityRepository.existsByCityCode(request.getCityCode())){
+        if (cityRepository.existsByCityCodeAndIdNot(request.getCityCode(),id)){
             throw new Exception("City with given code already exists");
         }
 

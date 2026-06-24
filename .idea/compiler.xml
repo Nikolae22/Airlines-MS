@@ -18,6 +18,8 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
         <module name="airline-core-service" />
+        <module name="flight-ops-service" />
+        <module name="user-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -25,6 +27,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="airline-core-service" options="" />
       <module name="airline-ms" options="" />
+      <module name="flight-ops-service" options="" />
       <module name="location-service" options="" />
       <module name="user-service" options="" />
     </option>

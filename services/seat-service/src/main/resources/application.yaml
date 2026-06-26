@@ -1,0 +1,25 @@
+server:
+  port: 5007
+
+spring:
+  application:
+    name: seat-service
+
+  datasource:
+    url: jdbc:h2:mem:airline_seat
+    username: we
+    password: we
+    driver-class-name: org.h2.Driver
+    h2:
+      console:
+        enabled: true
+        path: /h2-console
+    jpa:
+      hibernate:
+        ddl-auto: update
+
+  #  datasource:
+  #    url: jdbc:mysql://localhost:3306/airline_seat
+  #    username: we
+  #    password: we
+

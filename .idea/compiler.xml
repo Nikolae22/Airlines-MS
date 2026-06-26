@@ -17,15 +17,13 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
+        <module name="seat-service" />
         <module name="user-service" />
         <module name="airline-core-service" />
         <module name="flight-ops-service" />
         <module name="pricing-service" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="location-service" target="21" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -34,6 +32,7 @@
       <module name="flight-ops-service" options="" />
       <module name="location-service" options="" />
       <module name="pricing-service" options="" />
+      <module name="seat-service" options="" />
       <module name="user-service" options="" />
     </option>
   </component>

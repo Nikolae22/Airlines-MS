@@ -1,0 +1,41 @@
+package com.payload.request;
+
+import com.embeddable.ContactInfo;
+import com.enums.CabinClassType;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class BookingRequest {
+
+    @NotNull(message = "Flight ID is required")
+    private Long flightId;
+
+    @NotNull(message = "Flight Instance ID is required")
+    private Long flightInstanceId;
+
+    @NotNull(message = "Cabin Class Type is required")
+    private CabinClassType cabinClass;
+
+    @NotNull(message = "Fare ID is required")
+    private Long fareId;
+
+    @NotNull(message = "At least one passenger is required")
+    @Size(min = 1, message = "At least one passenger is required")
+    private List<PassengerRequest> passengers;
+
+    private ContactInfo contactInfo;
+
+    private List<Long> ancillaryIds;
+
+    private List<Long> mealIds;
+
+   // private List<String> seatNumbers;
+
+}

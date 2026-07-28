@@ -1,6 +1,8 @@
 package com.flightopsservice.service.impl;
 
 import com.enums.FlightStatus;
+import com.flightopsservice.client.AirlineClient;
+import com.flightopsservice.client.LocationClient;
 import com.flightopsservice.mapper.FlightInstanceMapper;
 import com.flightopsservice.mapper.FlightScheduleMapper;
 import com.flightopsservice.model.Flight;
@@ -28,6 +30,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     private final FlightScheduleRepository flightScheduleRepository;
     private final FlightRepository flightRepository;
     private final FlightInstanceService flightInstanceService;
+    private final LocationClient locationClient;
 
     @Override
     public FlightScheduleResponse createFlightSchedule(Long airlineId,
@@ -110,15 +113,19 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     }
 
     private FlightScheduleResponse convertToFlightScheduleResponse(FlightSchedule flightSchedule){
-        // todo service to service comuncaiton
-        AirportResponse departureAirport=AirportResponse
-                .builder()
-                .id(flightSchedule.getDepartureAirportId())
-                .build();
-        AirportResponse arrivalAirport=AirportResponse
-                .builder()
-                .id(flightSchedule.getArrivalAirportId())
-                .build();
+//        AirportResponse departureAirport=AirportResponse
+//                .builder()
+//                .id(flightSchedule.getDepartureAirportId())
+//                .build();
+//        AirportResponse arrivalAirport=AirportResponse
+//                .builder()
+//                .id(flightSchedule.getArrivalAirportId())
+//                .build();
+        //  service to service comuncaiton
+        AirportResponse departureAirport=locationClient
+                .getAirportById(flightSchedule.getDepartureAirportId());
+        AirportResponse arrivalAirport=locationClient
+                .getAirportById(flightSchedule.getDepartureAirportId());
         return FlightScheduleMapper.toDTO(
                 flightSchedule,arrivalAirport,departureAirport
         );

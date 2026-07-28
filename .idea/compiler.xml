@@ -11,9 +11,10 @@
         <module name="payment-service" />
         <module name="ancillary-service" />
         <module name="location-service" />
+        <module name="service-registry" />
         <module name="booking-service" />
       </profile>
-      <profile name="Annotation profile for payment-service" enabled="true">
+      <profile name="Annotation profile for Airline backend" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -39,6 +40,7 @@
       <module name="payment-service" options="" />
       <module name="pricing-service" options="" />
       <module name="seat-service" options="" />
+      <module name="service-registry" options="" />
       <module name="user-service" options="" />
     </option>
   </component>

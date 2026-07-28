@@ -5,6 +5,7 @@ import com.enums.BookingStatus;
 import com.payload.request.BookingRequest;
 import com.payload.response.ApiResponse;
 import com.payload.response.BookingResponse;
+import com.payload.response.PaymentInitiateResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class BookingController {
 
 
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(
+    public ResponseEntity<PaymentInitiateResponse> createBooking(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody BookingRequest bookingRequest){
         return ResponseEntity.status(HttpStatus.CREATED)

@@ -1,6 +1,8 @@
 package com.flightopsservice.service.impl;
 
 import com.enums.FlightStatus;
+import com.flightopsservice.client.AirlineClient;
+import com.flightopsservice.client.LocationClient;
 import com.flightopsservice.repository.FlightRepository;
 import com.flightopsservice.mapper.FlightMapper;
 import com.flightopsservice.model.Flight;
@@ -21,6 +23,10 @@ import org.springframework.stereotype.Service;
 public class FlightServiceImpl implements FlightService {
 
     private final FlightRepository flightRepository;
+   // private final AirlineIntegrationService airlineIntegrationService;
+    //private final AircraftIntegrationService aircraftIntegrationService;
+    private final AirlineClient airlineClient;
+    private final LocationClient locationClient;
 
     @Override
     public FlightResponse createFlight(Long airlineId, FlightRequest request) throws Exception {
@@ -89,14 +95,20 @@ public class FlightServiceImpl implements FlightService {
 
 
     public FlightResponse convertToFlightResponse(Flight flight){
-        // todo service to serviceCommunication
-        AircraftResponse aircraft=AircraftResponse.builder()
-                .id(flight.getAircraftId()).build();
-        AirlineResponse airline=AirlineResponse.builder().id(flight.getAirlineId()).build();
-        AirportResponse departureAirport=AirportResponse.builder()
-                .id(flight.getDepartureAirportId()).build();
-        AirportResponse arrivalAirport=AirportResponse
-                .builder().id(flight.getArrivalAirportId()).build();
+        // service to serviceCommunication
+//        AircraftResponse aircraft=AircraftResponse.builder()
+//                .id(flight.getAircraftId()).build();
+       // AircraftResponse aircraft=aircraftIntegrationService.getAircraftById(flight.getAircraftId());
+       // AirlineResponse airline=AirlineResponse.builder().id(flight.getAirlineId()).build();
+       // AirlineResponse airline=airlineIntegrationService.getAirlineById(flight.getAirlineId());
+//        AirportResponse departureAirport=AirportResponse.builder()
+//                .id(flight.getDepartureAirportId()).build();
+//        AirportResponse arrivalAirport=AirportResponse
+//                .builder().id(flight.getArrivalAirportId()).build();
+        AircraftResponse aircraft=airlineClient.getAircraftById(flight.getAircraftId());
+        AirlineResponse airline=airlineClient.getAirlineById(flight.getAirlineId());
+        AirportResponse departureAirport=locationClient.getAirportById(flight.getDepartureAirportId());
+        AirportResponse arrivalAirport=locationClient.getAirportById(flight.getArrivalAirportId());
         return FlightMapper.toDTO(flight,aircraft,
                 airline,departureAirport,arrivalAirport);
     }

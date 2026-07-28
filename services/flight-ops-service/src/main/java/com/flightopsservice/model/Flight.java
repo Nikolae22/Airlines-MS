@@ -18,7 +18,6 @@ import java.time.Instant;
 @EntityListeners(AuditingEntityListener.class)
 public class Flight {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,7 +39,6 @@ public class Flight {
 
     @Enumerated(EnumType.STRING)
     private FlightStatus status=FlightStatus.SCHEDULED;
-
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

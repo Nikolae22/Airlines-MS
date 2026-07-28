@@ -1,5 +1,9 @@
 package com.bookingservice.services.imp;
 
+import com.bookingservice.client.AncillaryClient;
+import com.bookingservice.client.FlightClient;
+import com.bookingservice.client.PaymentClient;
+import com.bookingservice.client.SeatClient;
 import com.bookingservice.mapper.BookingMapper;
 import com.bookingservice.model.Booking;
 import com.bookingservice.model.Passenger;
@@ -7,10 +11,13 @@ import com.bookingservice.repository.BookingRepository;
 import com.bookingservice.services.BookingService;
 import com.bookingservice.services.PassengerService;
 import com.bookingservice.services.TicketService;
+import com.bookingservice.services.integration.FareIntegrationService;
 import com.enums.BookingStatus;
+import com.enums.PaymentGateway;
 import com.payload.dto.PaymentDTO;
 import com.payload.request.BookingRequest;
 import com.payload.request.PassengerRequest;
+import com.payload.request.PaymentInitiateRequest;
 import com.payload.response.*;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.property.access.internal.PropertyAccessGetterImpl;
@@ -27,9 +34,14 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final PassengerService passengerService;
     private final TicketService ticketService;
+    private final FlightClient flightClient;
+    private final FareIntegrationService fareIntegrationService;
+    private final SeatClient seatClient;
+    private final AncillaryClient ancillaryClient;
+    private final PaymentClient paymentClient;
 
     @Override
-    public BookingResponse createBooking(BookingRequest bookingRequest, Long userId) {
+    public PaymentInitiateResponse createBooking(BookingRequest bookingRequest, Long userId) {
         //1 create uniq booking referemce
         String bookingReference = generateBookingReference();
         //2ceaete passenger
@@ -38,13 +50,14 @@ public class BookingServiceImpl implements BookingService {
             Passenger passenger=passengerService.createPassenger(passengerRequest,userId);
             passengers.add(passenger);
         }
-        // 3 todo check flifht exists
+        // 3 check flifht exists
+        FlightResponse flightResponse=flightClient.getFlightById(bookingRequest.getFlightId());
         // 4 create booking with pending
         Booking booking= BookingMapper.toEntity(bookingRequest,
                 userId,passengers,bookingReference);
-        //todo set ariline id from flightresponse
-        booking.setAirlineId(1L);
-
+        // set ariline id from flightresponse
+//        booking.setAirlineId(1L);
+            booking.setAirlineId(flightResponse.getAirline().getId());
         // 5 set sesat instance ids
         List<Long> seatInstanceIds= bookingRequest.getPassengers().stream()
                 .map(PassengerRequest::getSeatInstanceId)
@@ -61,12 +74,28 @@ public class BookingServiceImpl implements BookingService {
         // 6 generate tickets for booking
         ticketService.generateTicketsForBooking(booking);
 
-        //7 todo calculate price
+        //7 calculate price
+            //calculate fareTotal
+        Double fareTotal=fareIntegrationService.calculateFareTotal(bookingRequest.getFareId());
+            // seat price
+        Double seatPrice=seatClient.calculateSeatPrice(booking.getSeatInstanceIds());
+            // ancillary price
+        Double ancillaryPrice=ancillaryClient.calculateAncillariesPrice(
+                booking.getAncillaryIds());
+            // meal price
+        Double mealPrice=ancillaryClient.calculateMealPrice(booking.getMealIds());
 
-        // 8 todo initiate payment using payment service
+        Double totalPrice=mealPrice+seatPrice+ancillaryPrice;
+        // 8  initiate payment using payment service
+        PaymentInitiateRequest paymentRequest=PaymentInitiateRequest.builder()
+                .userId(userId)
+                .bookingId(booking.getId())
+                .amount(totalPrice)
+                .gateway(PaymentGateway.RAZORPAY)
+                .description("payment for booking  : "+bookingReference)
+                .build();
 
-
-        return convertToBookingResponse(booking);
+        return paymentClient.initiatePayment(paymentRequest);
     }
 
     @Override

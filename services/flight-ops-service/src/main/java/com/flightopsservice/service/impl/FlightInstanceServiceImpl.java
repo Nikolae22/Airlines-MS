@@ -1,5 +1,7 @@
 package com.flightopsservice.service.impl;
 
+import com.flightopsservice.client.AirlineClient;
+import com.flightopsservice.client.LocationClient;
 import com.flightopsservice.mapper.FlightInstanceMapper;
 import com.flightopsservice.model.Flight;
 import com.flightopsservice.model.FlightInstance;
@@ -25,6 +27,8 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 
     private final FlightInstanceRepository flightInstanceRepository;
     private final FlightRepository flightRepository;
+    private final AirlineClient airlineClient;
+    private final LocationClient locationClient;
 
     @Override
     public FlightInstanceResponse createFlightInstance(Long airlineId, FlightInstanceRequest request) throws Exception {
@@ -34,12 +38,13 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                 .orElseThrow(()->new Exception("Flight not found"));
 
         //dummy aircraft
-        // todo service comunication
-        AircraftResponse aircraft=AircraftResponse.builder()
-                .id(1L)
-                .totalSeats(90)
-                .build();
-
+        // service comunication
+//        AircraftResponse aircraft=AircraftResponse.builder()
+//                .id(1L)
+//                .totalSeats(90)
+//                .build();
+        //get aircraft data from airline core service
+        AircraftResponse aircraft=airlineClient.getAircraftById(flight.getAircraftId());
         FlightInstance flightInstance= FlightInstanceMapper.toEntity(request,flight);
         flightInstance.setTotalSeats(aircraft.getTotalSeats());
         flightInstance.setAvailableSeats(aircraft.getTotalSeats());
@@ -47,6 +52,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
         FlightInstance saved=flightInstanceRepository.save(flightInstance);
 
         // todo create seat instaces
+        //publish kafka event seat service consume that and create seta intance
 
         return convertToFlightInstanceResponse(saved);
     }
@@ -90,19 +96,23 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     }
 
     private FlightInstanceResponse convertToFlightInstanceResponse(FlightInstance flightInstance){
-        // todo service to serviceCommunication
-        AirlineResponse airline=AirlineResponse.builder()
-                .id(flightInstance.getAirlineId())
-                .build();
-        AirportResponse departureAirport=AirportResponse
-                .builder().id(flightInstance.getDepartureAirportId())
-                .build();
-        AirportResponse arriveAirport=AirportResponse
-                .builder().id(flightInstance.getArrivalAirportId())
-                .build();
-        AircraftResponse aircraft=AircraftResponse.builder()
-                .id(flightInstance.getFlight().getAircraftId())
-                .build();
+//        AirlineResponse airline=AirlineResponse.builder()
+//                .id(flightInstance.getAirlineId())
+//                .build();
+//        AirportResponse departureAirport=AirportResponse
+//                .builder().id(flightInstance.getDepartureAirportId())
+//                .build();
+//        AirportResponse arriveAirport=AirportResponse
+//                .builder().id(flightInstance.getArrivalAirportId())
+//                .build();
+//        AircraftResponse aircraft=AircraftResponse.builder()
+//                .id(flightInstance.getFlight().getAircraftId())
+//                .build();
+        //  service to serviceCommunication
+        AirlineResponse airline=airlineClient.getAirlineById(flightInstance.getAirlineId());
+        AirportResponse departureAirport=locationClient.getAirportById(flightInstance.getDepartureAirportId());
+        AirportResponse arriveAirport=locationClient.getAirportById(flightInstance.getArrivalAirportId());
+        AircraftResponse aircraft=airlineClient.getAircraftById(flightInstance.getFlight().getAircraftId());
 
         return FlightInstanceMapper.toDTO(
                 flightInstance,aircraft,airline,departureAirport,arriveAirport

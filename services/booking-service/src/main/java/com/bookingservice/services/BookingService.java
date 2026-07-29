@@ -12,7 +12,7 @@ public interface BookingService {
     PaymentInitiateResponse createBooking(BookingRequest bookingRequest, Long userId);
     BookingResponse updateBooking(Long bookingId,BookingRequest bookingRequest);
     BookingResponse getBookingById(Long bookingId) throws Exception;
-    List<BookingResponse> getAllBookingsByAirline(Long airlineId,
+    List<BookingResponse> getAllBookingsByAirline(Long userId,
                                                   String searchQuery,
                                                   BookingStatus status,
                                                   Long flightInstanceId,

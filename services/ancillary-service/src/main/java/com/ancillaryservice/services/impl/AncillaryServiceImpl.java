@@ -1,10 +1,12 @@
 package com.ancillaryservice.services.impl;
 
+import com.ancillaryservice.client.AirlineClient;
 import com.ancillaryservice.mapper.AncillaryMapper;
 import com.ancillaryservice.model.Ancillary;
 import com.ancillaryservice.repository.AncillaryRepository;
 import com.ancillaryservice.services.AncillaryService;
 import com.payload.request.AncillaryRequest;
+import com.payload.response.AirlineResponse;
 import com.payload.response.AncillaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,13 @@ import java.util.List;
 public class AncillaryServiceImpl implements AncillaryService {
 
     private final AncillaryRepository ancillaryRepository;
+    private final AirlineClient airlineClient;
 
     @Override
-    public AncillaryResponse createAncillary(Long airlineId, AncillaryRequest request) {
+    public AncillaryResponse createAncillary(Long userId, AncillaryRequest request) {
+
+        AirlineResponse airlineResp = airlineClient.getAirlineByOwner(userId);
+
         Ancillary ancillary=Ancillary.builder()
                 .type(request.getType())
                 .subType(request.getSubType())
@@ -27,7 +33,7 @@ public class AncillaryServiceImpl implements AncillaryService {
                 .description(request.getDescription())
                 .metadata(request.getMetadata())
                 .displayOrder(request.getDisplayOrder())
-                .airlineId(airlineId)
+                .airlineId(airlineResp.getOwnerId())
                 .build();
 
         Ancillary saved = ancillaryRepository.save(ancillary);
@@ -45,8 +51,9 @@ public class AncillaryServiceImpl implements AncillaryService {
     }
 
     @Override
-    public List<AncillaryResponse> getByAirlineId(Long airlineId) {
-        return ancillaryRepository.findByAirlineId(airlineId)
+    public List<AncillaryResponse> getByAirlineId(Long userId) {
+        AirlineResponse airlineResp = airlineClient.getAirlineByOwner(userId);
+        return ancillaryRepository.findByAirlineId(airlineResp.getOwnerId())
                 .stream()
                 .map(ancillary -> {
                     //todo fetch insurance coverage by ancillary

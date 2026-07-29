@@ -30,7 +30,6 @@ public class UserController {
         UserDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
-
     @GetMapping("/{userId}")
     public ResponseEntity<UserDTO> getUserById(
             @PathVariable Long userId) throws Exception {

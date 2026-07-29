@@ -5,7 +5,7 @@ import com.payload.response.SeatMapResponse;
 
 public interface SeatMapService {
 
-    SeatMapResponse createSeatMap(Long airlineId, SeatMapRequest request) throws Exception;
+    SeatMapResponse createSeatMap(Long userId, SeatMapRequest request) throws Exception;
     SeatMapResponse getSeatMapById(Long id) throws Exception;
     SeatMapResponse getSeatMapByCabinClass(Long cabinId);
     SeatMapResponse updateSeatMap(Long id ,SeatMapRequest request) throws Exception;

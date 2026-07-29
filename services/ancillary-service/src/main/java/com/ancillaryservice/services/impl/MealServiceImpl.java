@@ -1,10 +1,12 @@
 package com.ancillaryservice.services.impl;
 
+import com.ancillaryservice.client.AirlineClient;
 import com.ancillaryservice.mapper.MealMapper;
 import com.ancillaryservice.model.Meal;
 import com.ancillaryservice.repository.MealRepository;
 import com.ancillaryservice.services.MealService;
 import com.payload.request.MealRequest;
+import com.payload.response.AirlineResponse;
 import com.payload.response.MealResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,10 +20,12 @@ public class MealServiceImpl implements MealService {
 
 
     private final MealRepository mealRepository;
+    private final AirlineClient airlineClient;
 
     @Override
-    public MealResponse createMeal(Long airlineId,MealRequest request) throws Exception {
-        if (mealRepository.existsByCodeAndAirlineId(request.getCode(),airlineId)){
+    public MealResponse createMeal(Long userId,MealRequest request) throws Exception {
+        AirlineResponse airlineResp = airlineClient.getAirlineByOwner(userId);
+        if (mealRepository.existsByCodeAndAirlineId(request.getCode(),airlineResp.getId())){
             throw new Exception("Meal code already exists");
         }
         Meal meal=Meal.builder()
@@ -35,7 +39,7 @@ public class MealServiceImpl implements MealService {
                                ? request.getRequiresAdvanceBooking() : false)
                 .advanceBookingHours(request.getAdvanceBookingHours())
                 .displayOrder(request.getDisplayOrder() !=null ? request.getDisplayOrder():0)
-                .airlineId(airlineId)
+                .airlineId(airlineResp.getId())
                 .build();
 
         Meal saved=mealRepository.save(meal);
@@ -51,12 +55,13 @@ public class MealServiceImpl implements MealService {
     }
 
     @Override
-    public MealResponse updateMeal(Long airlineId,Long id, MealRequest request) throws Exception {
+    public MealResponse updateMeal(Long userId,Long id, MealRequest request) throws Exception {
         Meal meal = mealRepository.findById(id).orElseThrow(
                 () -> new Exception("Meal not found")
         );
+        AirlineResponse airlineResp = airlineClient.getAirlineByOwner(userId);
         if (meal.getCode() !=null &&
-                mealRepository.existsByAirlineIdAndCodeAndIdNot(airlineId,request.getCode(),meal.getId())){
+                mealRepository.existsByAirlineIdAndCodeAndIdNot(airlineResp.getId(),request.getCode(),meal.getId())){
             throw new Exception("Meal code alreadt exists");
         }
         meal.setCode(request.getCode());
@@ -74,8 +79,9 @@ public class MealServiceImpl implements MealService {
     }
 
     @Override
-    public List<MealResponse> getByAirlineId(Long airlineId) {
-        return mealRepository.findByAirlineId(airlineId)
+    public List<MealResponse> getByAirlineId(Long userId) {
+        AirlineResponse airlineResp = airlineClient.getAirlineByOwner(userId);
+        return mealRepository.findByAirlineId(airlineResp.getId())
                 .stream().map(
                         MealMapper::toDTO
                 ).collect(Collectors.toList());

@@ -31,11 +31,12 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     private final LocationClient locationClient;
 
     @Override
-    public FlightInstanceResponse createFlightInstance(Long airlineId, FlightInstanceRequest request) throws Exception {
+    public FlightInstanceResponse createFlightInstance(Long userId, FlightInstanceRequest request) throws Exception {
 
-        // todo watch arlineID
-        Flight flight=flightRepository.findById(request.getFlightId())
-                .orElseThrow(()->new Exception("Flight not found"));
+        //fetch arlineID
+        AirlineResponse airlineResponse = airlineClient.getAirlineByOwner(userId);
+        Flight flight = flightRepository.findById(request.getFlightId())
+                .orElseThrow(() -> new Exception("Flight not found"));
 
         //dummy aircraft
         // service comunication
@@ -44,12 +45,12 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 //                .totalSeats(90)
 //                .build();
         //get aircraft data from airline core service
-        AircraftResponse aircraft=airlineClient.getAircraftById(flight.getAircraftId());
-        FlightInstance flightInstance= FlightInstanceMapper.toEntity(request,flight);
+        AircraftResponse aircraft = airlineClient.getAircraftById(flight.getAircraftId());
+        FlightInstance flightInstance = FlightInstanceMapper.toEntity(request, flight);
         flightInstance.setTotalSeats(aircraft.getTotalSeats());
         flightInstance.setAvailableSeats(aircraft.getTotalSeats());
 
-        FlightInstance saved=flightInstanceRepository.save(flightInstance);
+        FlightInstance saved = flightInstanceRepository.save(flightInstance);
 
         // todo create seat instaces
         //publish kafka event seat service consume that and create seta intance
@@ -59,43 +60,45 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 
     @Override
     public FlightInstanceResponse getFlightInstanceById(Long id) throws Exception {
-        FlightInstance flightInstance=flightInstanceRepository.findById(id)
-                .orElseThrow(()->new Exception("Flight instance not found"));
+        FlightInstance flightInstance = flightInstanceRepository.findById(id)
+                .orElseThrow(() -> new Exception("Flight instance not found"));
         return convertToFlightInstanceResponse(flightInstance);
     }
 
     @Override
-    public Page<FlightInstanceResponse> getByAirlineId(Long airlineId,
+    public Page<FlightInstanceResponse> getByAirlineId(Long userId,
                                                        Long departureAirportId,
                                                        Long arrivalAirportId,
                                                        Long flightId,
                                                        LocalDate onDate,
                                                        Pageable pageable) {
-        // todo watch arlineId
-        LocalDateTime start=onDate!=null ? onDate.atStartOfDay():null;
-        LocalDateTime end = onDate !=null ?onDate.plusDays(1).atStartOfDay():null;
-        return flightInstanceRepository.findByAirlineId(airlineId,
-                        departureAirportId,arrivalAirportId,flightId,
-                        start,end,pageable)
+        // fetcj by ownerId
+        AirlineResponse airlineResponse = airlineClient.getAirlineByOwner(userId);
+        LocalDateTime start = onDate != null ? onDate.atStartOfDay() : null;
+        LocalDateTime end = onDate != null ? onDate.plusDays(1).atStartOfDay() : null;
+        return flightInstanceRepository.findByAirlineId(
+                        airlineResponse.getId(),
+                        departureAirportId, arrivalAirportId, flightId,
+                        start, end, pageable)
                 .map(this::convertToFlightInstanceResponse);
     }
 
     @Override
     public FlightInstanceResponse updateFlightInstance(Long id, FlightInstanceRequest request) throws Exception {
-        FlightInstance flightInstance=flightInstanceRepository.findById(id)
-                .orElseThrow(()->new Exception("Flight instance not found"));
-        FlightInstanceMapper.updateEntity(request,flightInstance);
+        FlightInstance flightInstance = flightInstanceRepository.findById(id)
+                .orElseThrow(() -> new Exception("Flight instance not found"));
+        FlightInstanceMapper.updateEntity(request, flightInstance);
         return convertToFlightInstanceResponse(flightInstanceRepository.save(flightInstance));
     }
 
     @Override
     public void deleteFlightInstance(Long id) throws Exception {
-        FlightInstance flightInstance=flightInstanceRepository.findById(id)
-                .orElseThrow(()->new Exception("Flight instance not found"));
+        FlightInstance flightInstance = flightInstanceRepository.findById(id)
+                .orElseThrow(() -> new Exception("Flight instance not found"));
         flightInstanceRepository.delete(flightInstance);
     }
 
-    private FlightInstanceResponse convertToFlightInstanceResponse(FlightInstance flightInstance){
+    private FlightInstanceResponse convertToFlightInstanceResponse(FlightInstance flightInstance) {
 //        AirlineResponse airline=AirlineResponse.builder()
 //                .id(flightInstance.getAirlineId())
 //                .build();
@@ -109,13 +112,13 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 //                .id(flightInstance.getFlight().getAircraftId())
 //                .build();
         //  service to serviceCommunication
-        AirlineResponse airline=airlineClient.getAirlineById(flightInstance.getAirlineId());
-        AirportResponse departureAirport=locationClient.getAirportById(flightInstance.getDepartureAirportId());
-        AirportResponse arriveAirport=locationClient.getAirportById(flightInstance.getArrivalAirportId());
-        AircraftResponse aircraft=airlineClient.getAircraftById(flightInstance.getFlight().getAircraftId());
+        AirlineResponse airline = airlineClient.getAirlineById(flightInstance.getAirlineId());
+        AirportResponse departureAirport = locationClient.getAirportById(flightInstance.getDepartureAirportId());
+        AirportResponse arriveAirport = locationClient.getAirportById(flightInstance.getArrivalAirportId());
+        AircraftResponse aircraft = airlineClient.getAircraftById(flightInstance.getFlight().getAircraftId());
 
         return FlightInstanceMapper.toDTO(
-                flightInstance,aircraft,airline,departureAirport,arriveAirport
+                flightInstance, aircraft, airline, departureAirport, arriveAirport
         );
     }
 }

@@ -20,11 +20,11 @@ public class FlightScheduleController {
 
     @PostMapping
     public ResponseEntity<FlightScheduleResponse> createFlightSchedule(
-            @RequestHeader(name = "X-Airline-Id") Long airlineId,
+            @RequestHeader(name = "X-User-Id") Long userId,
             @Valid @RequestBody FlightScheduleRequest request) throws Exception {
         //todo watch for airline id
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(flightScheduleService.createFlightSchedule(airlineId, request));
+                .body(flightScheduleService.createFlightSchedule(userId, request));
     }
 
     @GetMapping("/{id}")
@@ -35,9 +35,9 @@ public class FlightScheduleController {
 
     @GetMapping
     public ResponseEntity<?> getFlightSchedules(
-            @RequestHeader(name = "X-User-Id") Long airlineId) {
+            @RequestHeader(name = "X-User-Id") Long userId) {
         return ResponseEntity.ok(
-                flightScheduleService.getFlightScheduleByAirline(airlineId)
+                flightScheduleService.getFlightScheduleByAirline(userId)
         );
     }
 

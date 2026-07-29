@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface MealService {
 
-    MealResponse createMeal(Long airlineId,MealRequest request) throws Exception;
+    MealResponse createMeal(Long userId,MealRequest request) throws Exception;
 
     MealResponse getMealById(Long id) throws Exception;
-    MealResponse updateMeal(Long airlineId,Long id,MealRequest request) throws Exception;
-    List<MealResponse> getByAirlineId(Long airlineId);
+    MealResponse updateMeal(Long userId,Long id,MealRequest request) throws Exception;
+    List<MealResponse> getByAirlineId(Long userId);
     void  deleteMeal(Long id) throws Exception;
 
     MealResponse updateAvailability(Long id, Boolean availability) throws Exception;

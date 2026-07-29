@@ -44,7 +44,7 @@ public class BookingController {
             @RequestParam(required = false)BookingStatus status,
             @RequestParam(required = false) Long flightInstanceId,
             @RequestParam(defaultValue = "DESC") String sortDirection,
-            @RequestHeader("X-Airline-Id") Long userId){
+            @RequestHeader("X-User-Id") Long userId){
         return ResponseEntity.ok(
                 bookingService.getAllBookingsByAirline(
                         userId,search,status,flightInstanceId,sortDirection

@@ -29,25 +29,28 @@ public class FlightServiceImpl implements FlightService {
     private final LocationClient locationClient;
 
     @Override
-    public FlightResponse createFlight(Long airlineId, FlightRequest request) throws Exception {
+    public FlightResponse createFlight(Long userId, FlightRequest request) throws Exception {
 
-        // todo watch airlineId
+        // watch airlineId fetch airline by owner id
+        AirlineResponse airlineResponse=airlineClient.getAirlineByOwner(userId);
+
         if (flightRepository.existsByFlightNumber(request.getFlightNumber())){
             throw new Exception("Flight with id already exists");
         }
         Flight flight=FlightMapper.toEntity(request);
-        flight.setAirlineId(airlineId);
+        flight.setAirlineId(airlineResponse.getId());
         Flight saved = flightRepository.save(flight);
         return convertToFlightResponse(saved);
     }
 
     @Override
-    public Page<FlightResponse> getFlightsByAirline(Long airlineId,
+    public Page<FlightResponse> getFlightsByAirline(Long userId,
                                                     Long departureAirportId,
                                                     Long arrivalAirportId,
                                                     Pageable pageable) {
-        // todo watchAirlineId
-        return flightRepository.findByAirlineId(airlineId,
+        //fetch airline by owner id
+        AirlineResponse airlineResponse=airlineClient.getAirlineByOwner(userId);
+        return flightRepository.findByAirlineId(airlineResponse.getId(),
                 departureAirportId,arrivalAirportId,pageable)
                 .map(this::convertToFlightResponse);
     }
@@ -86,9 +89,10 @@ public class FlightServiceImpl implements FlightService {
     }
 
     @Override
-    public void deleteFlight(Long airlineId,Long id) throws Exception {
-        //todo watchAirlineId
-        Flight flight=flightRepository.findByAirlineIdAndId(airlineId,id)
+    public void deleteFlight(Long userId,Long id) throws Exception {
+        // watchAirlineId
+        AirlineResponse airlineResponse=airlineClient.getAirlineByOwner(userId);
+        Flight flight=flightRepository.findByAirlineIdAndId(airlineResponse.getId(),id)
                 .orElseThrow(()->new Exception("Flight not found with this id"));
         flightRepository.delete(flight);
     }

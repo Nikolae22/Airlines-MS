@@ -1,14 +1,23 @@
 package com.apigateway.config;
 
+import com.enums.UserRole;
 import org.springframework.cloud.gateway.server.mvc.filter.LoadBalancerFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.*;
 @Configuration
 public class RouteConfig {
+
+    private final JwtUtil jwtUtil;
+
+    public RouteConfig(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     //questo e per il mvc non web flux
     @Bean
@@ -34,6 +43,8 @@ public class RouteConfig {
                 //name microservizio per laod balancer se ci sono piu istanze di quello
                 //anche se arriva da url sorpa mandali al user service
                 .filter(LoadBalancerFilterFunctions.lb("location-service"))
+                .before(this::jwtAuthFilter)
+                .before(request -> requireRole(request, UserRole.ROLE_SYSTEM_ADMIN.toString()))
                 .build();
     }
 
@@ -48,8 +59,8 @@ public class RouteConfig {
                 //anche se arriva da url sorpa mandali al user service
                 .filter(LoadBalancerFilterFunctions.lb("airline-core-service"))
 //                .filter(CircuitBreakerFilterFunctions.circuitBreaker("airline-core-service-cb"))
-//                .before(this::jwtAuthFilter)
-//                .before(serverRequest ->requireRole(request, 'ROLE_SYSTEM_ADMIN'))
+                .before(this::jwtAuthFilter)
+                .before(request -> requireRole(request, UserRole.ROLE_SYSTEM_ADMIN.toString()))
                 .build();
     }
 
@@ -62,6 +73,7 @@ public class RouteConfig {
                 //name microservizio per laod balancer se ci sono piu istanze di quello
                 //anche se arriva da url sorpa mandali al user service
                 .filter(LoadBalancerFilterFunctions.lb("user-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -77,8 +89,8 @@ public class RouteConfig {
                 //anche se arriva da url sorpa mandali al user service
                 .filter(LoadBalancerFilterFunctions.lb("airline-core-service"))
 //                .filter(CircuitBreakerFilterFunctions.circuitBreaker("airline-core-service-cb"))
-//                .before(this::jwtAuthFilter)
-//                .before(serverRequest ->requireRole(request, 'ROLE_SYSTEM_ADMIN'))
+                .before(this::jwtAuthFilter)
+//                .before(request -> requireRole(request, UserRole.ROLE_SYSTEM_ADMIN.toString()))
                 .build();
     }
 
@@ -93,6 +105,7 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/seat-instances/**"), HandlerFunctions.http())
                 .route(RequestPredicates.path("/api/flight-instance-cabins/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("seat-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -105,6 +118,7 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/flight-instances/**"), HandlerFunctions.http())
                 .route(RequestPredicates.path("/api/flight-schedules/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("flights-ops-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -117,6 +131,7 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/fare-rules/**"), HandlerFunctions.http())
                 .route(RequestPredicates.path("/api/baggage-policies/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("pricing-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -131,6 +146,7 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/flight-meals/**"), HandlerFunctions.http())
                 .route(RequestPredicates.path("/api/flight-cabin-ancillaries/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("ancillary-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -143,6 +159,7 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/cities/**"), HandlerFunctions.http())
                 .route(RequestPredicates.path("/api/airports/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("location-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -153,6 +170,7 @@ public class RouteConfig {
                 //da dove arriva
                 .route(RequestPredicates.path("/api/boookings/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("booking-service"))
+                .before(this::jwtAuthFilter)
                 .build();
     }
 
@@ -164,7 +182,55 @@ public class RouteConfig {
                 .route(RequestPredicates.path("/api/payments/**"), HandlerFunctions.http())
                 .filter(LoadBalancerFilterFunctions.lb("flights-ops-service"))
                 //.filter(CircuitBreakerFilterFunctions.circuitBreaker("payment-service-cb", URI.create("forward://fallback")))
+                .before(this::jwtAuthFilter)
                 .build();
+    }
+
+    /* il flow del metodo
+        1 check authorization header exists? if properly formated with Bearer  prefix
+        2 Strip Bearer prefix 7ch to get the row jwt token
+        3 validate token signature: token signature is valid and not expired use JwtUtils for cryptographic verification
+        4 check blacklist: cioe is been revoken user logged out querires redis to verify active statsu
+        5 extract user inforamtion: retrive email authorization user id form token claims
+        6 forward requests with enriched headers
+     */
+    private ServerRequest jwtAuthFilter(ServerRequest request){
+        String authHeader=request.headers().firstHeader(JwtConstant.JWT_HEADER);
+
+        //step 1 check auth header exists
+        if (authHeader ==null || authHeader.startsWith(JwtConstant.TOKEN_PREFIX)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "missing or invalid authorization token");
+        }
+
+        //step 2 remove prefix from token
+        String token=authHeader.substring(JwtConstant.TOKEN_PREFIX.length());
+
+        // step 3validate
+        if (!jwtUtil.isTokenValid(token)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "expired jwt token");
+        }
+
+        // step 4 grab user info from jwt token
+        String email=jwtUtil.extractEmail(token);
+        String authorities=jwtUtil.extractAuthorities(token);
+        Long userId=jwtUtil.extractUserId(token);
+
+        return ServerRequest.from(request)
+                .header("X-User-Id",String.valueOf(userId))
+                .header("X-User-Email",email)
+                .header("X-User-Roles",authorities)
+                .build();
+    }
+
+    private ServerRequest requireRole(ServerRequest request,String role){
+        String roles=request.headers().firstHeader("X-User-Roles");
+        if (role == null || !roles.contains(role)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "access denied, required role "+role);
+        }
+        return request;
     }
 
 

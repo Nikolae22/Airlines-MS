@@ -23,9 +23,9 @@ public class AncillaryController {
     @PostMapping
     public ResponseEntity<AncillaryResponse> createAncillary(
             @RequestBody @Valid AncillaryRequest request,
-            @RequestHeader("X-Airline-Id") Long airlineId){
+            @RequestHeader("X-User-Id") Long userId){
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ancillaryService.createAncillary(airlineId,request));
+                .body(ancillaryService.createAncillary(userId,request));
     }
 
     @GetMapping("/{id}")
@@ -36,10 +36,9 @@ public class AncillaryController {
 
     @GetMapping
     public ResponseEntity<List<AncillaryResponse>> getByAirlineId(
-//            @RequestHeader("X-User-Id") Long userId
-            @RequestHeader("X-Airline-Id") Long airlineId
+            @RequestHeader("X-User-Id") Long userId
     ){
-        return ResponseEntity.ok(ancillaryService.getByAirlineId(airlineId));
+        return ResponseEntity.ok(ancillaryService.getByAirlineId(userId));
     }
 
     @PutMapping("/{id}")

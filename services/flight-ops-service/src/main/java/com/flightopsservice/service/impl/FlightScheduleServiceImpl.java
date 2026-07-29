@@ -13,6 +13,7 @@ import com.flightopsservice.service.FlightInstanceService;
 import com.flightopsservice.service.FlightScheduleService;
 import com.payload.request.FlightInstanceRequest;
 import com.payload.request.FlightScheduleRequest;
+import com.payload.response.AirlineResponse;
 import com.payload.response.AirportResponse;
 import com.payload.response.FlightScheduleResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,14 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     private final FlightRepository flightRepository;
     private final FlightInstanceService flightInstanceService;
     private final LocationClient locationClient;
+    private final AirlineClient airlineClient;
 
     @Override
-    public FlightScheduleResponse createFlightSchedule(Long airlineId,
+    public FlightScheduleResponse createFlightSchedule(Long userId,
                                                        FlightScheduleRequest request) throws Exception {
 
-        //todo watch for airlineid
+        //fetch for airlineid
+        AirlineResponse airlineResponse=airlineClient.getAirlineByOwner(userId);
         Flight flight =flightRepository.findById(request.getFlightId())
                 .orElseThrow(()->new Exception("FLight not found with given id"));
         if (request.getEndDate().isBefore(request.getStartDate())){
@@ -74,7 +77,8 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                 flightInstanceRequest.setArrivalDateTime(
                         LocalDateTime.of(date,saved.getArrivalTime())
                 );
-                flightInstanceService.createFlightInstance(airlineId, flightInstanceRequest);
+                flightInstanceService.createFlightInstance(
+                        airlineResponse.getId(), flightInstanceRequest);
             }
         }
         return convertToFlightScheduleResponse(saved);
@@ -89,8 +93,10 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
 
     @Override
     public List<FlightScheduleResponse> getFlightScheduleByAirline(Long userId) {
-        //todo watch ariline id
-        List<FlightSchedule> schedules=flightScheduleRepository.findByFlightAirlineId(userId);
+        //fetch ariline id
+        AirlineResponse airlineResponse=airlineClient.getAirlineByOwner(userId);
+        List<FlightSchedule> schedules=flightScheduleRepository.findByFlightAirlineId(
+                airlineResponse.getId());
         return schedules.stream()
                 .map(this::convertToFlightScheduleResponse)
                 .toList();

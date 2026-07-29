@@ -7,12 +7,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="common-lib" />
         <module name="payment-service" />
-        <module name="ancillary-service" />
         <module name="location-service" />
-        <module name="service-registry" />
         <module name="booking-service" />
+        <module name="api-gateway" />
+        <module name="common-lib" />
+        <module name="ancillary-service" />
+        <module name="service-registry" />
       </profile>
       <profile name="Annotation profile for Airline backend" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -34,6 +35,7 @@
       <module name="airline-core-service" options="" />
       <module name="airline-ms" options="" />
       <module name="ancillary-service" options="" />
+      <module name="api-gateway" options="" />
       <module name="booking-service" options="" />
       <module name="flight-ops-service" options="" />
       <module name="location-service" options="" />

@@ -1,9 +1,6 @@
 package com.bookingservice.services.imp;
 
-import com.bookingservice.client.AncillaryClient;
-import com.bookingservice.client.FlightClient;
-import com.bookingservice.client.PaymentClient;
-import com.bookingservice.client.SeatClient;
+import com.bookingservice.client.*;
 import com.bookingservice.mapper.BookingMapper;
 import com.bookingservice.model.Booking;
 import com.bookingservice.model.Passenger;
@@ -39,6 +36,7 @@ public class BookingServiceImpl implements BookingService {
     private final SeatClient seatClient;
     private final AncillaryClient ancillaryClient;
     private final PaymentClient paymentClient;
+    private final AirlineClient airlineClient;
 
     @Override
     public PaymentInitiateResponse createBooking(BookingRequest bookingRequest, Long userId) {
@@ -111,12 +109,16 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingResponse> getAllBookingsByAirline(Long airlineId, String searchQuery, BookingStatus status,
+    public List<BookingResponse> getAllBookingsByAirline(Long userId, String searchQuery, BookingStatus status,
                                                          Long flightInstanceId, String sortDirection) {
+        AirlineResponse airlineResponse = airlineClient.getAirlineByOwner(userId);
         Sort.Direction direction="asc".equalsIgnoreCase(sortDirection)?Sort.Direction.ASC: Sort.Direction.DESC;
         Sort sort=Sort.by(direction,"bookingDate");
         List<Booking> bookings=bookingRepository.findByAirlineWithFilter(
-                airlineId,searchQuery,status,flightInstanceId,sort);
+                airlineResponse.getId(),
+                searchQuery,
+                status,
+                flightInstanceId,sort);
         return bookings.stream().map(
                 this::convertToBookingResponse
         ).toList();

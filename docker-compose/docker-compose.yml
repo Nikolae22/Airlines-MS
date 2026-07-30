@@ -1,0 +1,467 @@
+services:
+
+#databases
+  userdb:
+    image: mysql:8.0
+    container_name: userdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3303:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_user
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  airlinecoredb:
+    image: mysql:8.0
+    container_name: airlinecoredb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3302:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_core_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  flightopsdb:
+    image: mysql:8.0
+    container_name: flightopsdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3304:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_flight_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  locationdb:
+    image: mysql:8.0
+    container_name: locationdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3305:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_location_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  seatdb:
+    image: mysql:8.0
+    container_name: seatdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3311:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_seat_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  pricingdb:
+    image: mysql:8.0
+    container_name: pricingdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_pricing_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  ancillarydb:
+    image: mysql:8.0
+    container_name: ancillarydb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "33028:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_ancillary_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  bookingdb:
+    image: mysql:8.0
+    container_name: bookingdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3309:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_booking_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  paymentdb:
+    image: mysql:8.0
+    container_name: paymentdb
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATBASE: airline_payment_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin","ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+
+
+
+# infra
+  service-registry:
+    image: "nicolae22/service-registry:1.0"
+    container_name: eureka-server
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+    environment:
+#      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+#      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  api-gateway:
+    image: "nicolae22/api-gateway:1.0"
+    container_name: gateway
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    ports:
+      - "5000:5000"
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "api-gateway"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      #      SPRING_DATA_REDIS_HOST: redis
+      #      SPRING_DATA_REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+
+
+# services
+  user-service:
+    image: "nicolae22/user:1.0"
+    container_name: user-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+#      config-server:
+#        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      userdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "user-service"
+#      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://userdb:3306/airline_user?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+  airline-core-service:
+    image: "nicolae22/airline:1.0"
+    container_name: airline-core-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+#      config-server:
+#        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      airlinecoredb:
+        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "airline-core-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://airlinecoredb:3306/airline_core_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+#      SPRING_DATA_REDIS_HOST: redis
+#      SPRING_DATA_REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+    restart: unless-stopped
+    networks:
+      - airline
+
+  flight-core-service:
+    image: "nicolae22/flight:1.0"
+    container_name: flight-ops-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      flightopsdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "flight-ops-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://flightopsdb:3306/airline_flight_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+#      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      #      SPRING_DATA_REDIS_HOST: redis
+      #      SPRING_DATA_REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+    restart: unless-stopped
+    networks:
+      - airline
+
+  location-service:
+    image: "nicolae22/location:1.0"
+    container_name: location-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      locationdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "location-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://locationdb:3306/airline_location_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      #      SPRING_DATA_REDIS_HOST: redis
+      #      SPRING_DATA_REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+    restart: unless-stopped
+    networks:
+      - airline
+
+  seat-service:
+    image: "nicolae22/seat:1.0"
+    container_name: seat-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      seatdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "seat-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://seatdb:3306/airline_seat_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      #      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+    restart: unless-stopped
+    networks:
+      - airline
+
+  pricing-service:
+    image: "nicolae22/flight:1.0"
+    container_name: pricing-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      pricingdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "pricing-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://pricingdb:3306/airline_pricing_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      #      SPRING_DATA_REDIS_HOST: redis
+      #      SPRING_DATA_REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+
+  ancillary-service:
+    image: "nicolae22/ancillary:1.0"
+    container_name: ancillary-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      ancillarydb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "ancillary-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://ancillarydb:3306/airline_ancillary_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+  booking-service:
+    image: "nicolae22/booking:1.0"
+    container_name: booking-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      bookingdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "booking-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://bookingdb:3306/airline_booking_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+  payment-service:
+    image: "nicolae22/payment:1.0"
+    container_name: payment-service
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    depends_on:
+      #      config-server:
+      #        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      paymentdb:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "payment-service"
+      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://paymentdb:3306/airline_payment_db?useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASORUCE_USERNAME: root
+      SPRING_DATASORUCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+      #      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
+
+
+
+
+
+

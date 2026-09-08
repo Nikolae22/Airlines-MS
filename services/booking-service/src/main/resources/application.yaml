@@ -17,6 +17,13 @@ spring:
     jpa:
       hibernate:
         ddl-auto: update
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: booking-service-group
+
+  # booking api-> payment link-> make payment->payment id-> verify payment-> update booking status
 eureka:
   client:
     register-with-eureka: true

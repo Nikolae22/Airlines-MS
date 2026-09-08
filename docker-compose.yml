@@ -11,3 +11,25 @@ services:
       MYSQL_DATABASE: airline_location
       MYSQL_USER: we
       MYSQL_PASSWORD: we
+
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka
+#    mem_limit: 1gb
+    mem_reservation: 512m
+#    cpus: 1.0
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker, controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092, CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 #internal service name
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+#      KAFKA_LOG_DIRS: /tmp/kraft-combned-logs
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx1g"
+

@@ -17,6 +17,14 @@ spring:
     jpa:
       hibernate:
         ddl-auto: update
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: seat-service-group
+      key-deserializer: org.apache.kafka.common.serialization.SpringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
 eureka:
   client:
     register-with-eureka: true

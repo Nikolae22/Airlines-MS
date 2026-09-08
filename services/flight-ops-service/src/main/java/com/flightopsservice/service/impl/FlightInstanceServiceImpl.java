@@ -1,7 +1,9 @@
 package com.flightopsservice.service.impl;
 
+import com.event.FlightInstanceCreatedEvent;
 import com.flightopsservice.client.AirlineClient;
 import com.flightopsservice.client.LocationClient;
+import com.flightopsservice.event.FlightInstanceEventProducer;
 import com.flightopsservice.mapper.FlightInstanceMapper;
 import com.flightopsservice.model.Flight;
 import com.flightopsservice.model.FlightInstance;
@@ -29,6 +31,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     private final FlightRepository flightRepository;
     private final AirlineClient airlineClient;
     private final LocationClient locationClient;
+    private final FlightInstanceEventProducer flightInstanceEventProducer;
 
     @Override
     public FlightInstanceResponse createFlightInstance(Long userId, FlightInstanceRequest request) throws Exception {
@@ -52,8 +55,15 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 
         FlightInstance saved = flightInstanceRepository.save(flightInstance);
 
-        // todo create seat instaces
+        //create seat instaces
         //publish kafka event seat service consume that and create seta intance
+        FlightInstanceCreatedEvent event=FlightInstanceCreatedEvent.builder()
+                .flightInstanceId(flightInstance.getId())
+                .aircraftId(flight.getAircraftId())
+                .flightId(flight.getId())
+                .build();
+
+        flightInstanceEventProducer.sendFlightInstanceCreated(event);
 
         return convertToFlightInstanceResponse(saved);
     }

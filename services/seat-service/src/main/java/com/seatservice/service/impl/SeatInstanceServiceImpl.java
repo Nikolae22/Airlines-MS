@@ -1,5 +1,8 @@
 package com.seatservice.service.impl;
 
+import com.enums.SeatAvailabilityStatus;
+import com.payload.response.SeatInstanceResponse;
+import com.seatservice.mapper.SeatInstanceMapper;
 import com.seatservice.model.SeatInstance;
 import com.seatservice.repository.SeatInstanceRepository;
 import com.seatservice.service.SeatInstanceService;
@@ -24,5 +27,14 @@ public class SeatInstanceServiceImpl implements SeatInstanceService {
             price +=seatPremium;
         }
         return price;
+    }
+
+    @Override
+    public SeatInstanceResponse updateSeatInstanceStatus(Long seatInstanceId, SeatAvailabilityStatus status) {
+        SeatInstance seatInstance=seatInstanceRepository.findById(seatInstanceId).orElse(null);
+        if (seatInstance ==null) {return null;}
+        seatInstance.setStatus(status);
+        seatInstanceRepository.save(seatInstance);
+        return SeatInstanceMapper.toDTO(seatInstance);
     }
 }

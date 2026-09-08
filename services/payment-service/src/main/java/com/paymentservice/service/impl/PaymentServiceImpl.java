@@ -8,6 +8,8 @@ import com.payload.request.PaymentInitiateRequest;
 import com.payload.request.PaymentVerifyRequest;
 import com.payload.response.PaymentInitiateResponse;
 import com.payload.response.PaymentLinkResponse;
+import com.paymentservice.client.UserClient;
+import com.paymentservice.event.PaymentEventProducer;
 import com.paymentservice.mapper.PaymentMapper;
 import com.paymentservice.model.Payment;
 import com.paymentservice.reposiotry.PaymentRepository;
@@ -32,6 +34,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final RazorpayService razorpayService;
+    private final PaymentEventProducer paymentEventProducer;
+    private final UserClient userClient;
 
     @Override
     public PaymentInitiateResponse initiatePayment(PaymentInitiateRequest request) throws RazorpayException {
@@ -63,12 +67,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         if (request.getGateway() == PaymentGateway.RAZORPAY){
-            //todo fetch user details using feign client
-            UserDTO userDTO=new UserDTO();
-            userDTO.setId(1L);
-            userDTO.setFullName("Pablo Emilio");
-            userDTO.setEmail("we@we.com");
-            userDTO.setPhone("123456");
+            //fetch user details using feign client
+            UserDTO userDTO=userClient.getUserById(request.getUserId());
+//            UserDTO userDTO=new UserDTO();
+//            userDTO.setId(1L);
+//            userDTO.setFullName("Pablo Emilio");
+//            userDTO.setEmail("we@we.com");
+//            userDTO.setPhone("123456");
             //create razorpay payment link using razorpay service
             PaymentLinkResponse paymentLinkResponse=razorpayService.createPaymentLink(
                     userDTO,payment);
@@ -103,13 +108,16 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setPaidAt(LocalDateTime.now());
             paymentRepository.save(payment);
 
-            //todo publish kafka event
+            //publish kafka event success payment
+            paymentEventProducer.sendPaymentCompleted(payment);
         }else {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason("Payment verification failed");
             paymentRepository.save(payment);
 
-            //todo publish kafak event
+            //publish kafka event payment failed
+            paymentEventProducer.sendPaymentFailed(payment);
+
         }
         return PaymentMapper.toDTO(payment);
     }

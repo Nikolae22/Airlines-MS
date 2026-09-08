@@ -53,12 +53,19 @@ public class FareController {
         return ResponseEntity.ok(fareService.getFaresByIds(ids));
     }
 
+    @GetMapping("/lowest/flight/{flightId}/cabin-class/{cabinClassId}")
+    ResponseEntity<FareResponse> getLowestFareForFlightAndCabinClass(
+            @PathVariable Long flightId,
+            @PathVariable Long cabinClassId){
+        return ResponseEntity.ok(fareService
+                 .getLowestFareForFlightAndCabin(flightId,cabinClassId));
+    }
+
     @PostMapping("/search")
     public ResponseEntity<Map<Long,FareResponse>> getLowestFaresForFlight(
             @RequestBody List<Long> flightsIds,
-            @RequestParam(name = "cabinClassId") Long cabinClassId){
-        Map<Long,FareResponse> res=fareService.getLowestFarePerFlight(flightsIds,cabinClassId);
-        System.out.println("Search for response "+res.toString());
+            @RequestParam(name = "cabinClassId") Long cabinClassId) {
+        Map<Long, FareResponse> res = fareService.getLowestFarePerFlight(flightsIds, cabinClassId);
         return ResponseEntity.ok(res);
     }
 

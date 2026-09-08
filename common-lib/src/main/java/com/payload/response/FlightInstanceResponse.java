@@ -45,5 +45,5 @@ public class FlightInstanceResponse {
 
     private Long version;
 
-//    private FareResponse fare;
+    private FareResponse fare;
 }

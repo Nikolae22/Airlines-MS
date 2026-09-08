@@ -9,6 +9,7 @@ import com.pricingservice.service.FareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -124,6 +125,16 @@ public class FareServiceImpl implements FareService {
 //                        (existing, candidate) ->  // 3. Se per lo stesso flightId ci sono più tariffe, tiene la più bassa
 //                                candidate.getTotalPrice() < existing.getTotalPrice() ? candidate : existing
 //                ));
+    }
+
+    @Override
+    public FareResponse getLowestFareForFlightAndCabin(Long flightId, Long cabinClassId) {
+        List<Fare> fares=fareRepository.findByFlightIdAndCabinClassId(
+                flightId, cabinClassId);
+        Fare lowestFare=fares.stream()
+                .min(Comparator.comparingDouble(Fare::getTotalPrice))
+                .orElseThrow(null);
+        return FareMapper.toDTO(lowestFare);
     }
 
     @Override

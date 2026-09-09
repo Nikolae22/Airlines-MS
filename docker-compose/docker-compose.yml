@@ -167,17 +167,57 @@ services:
 
 
 # infra
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka
+    #    mem_limit: 1gb
+    mem_reservation: 512m
+    #    cpus: 1.0
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker, controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092, CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 #internal service name
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      #      KAFKA_LOG_DIRS: /tmp/kraft-combned-logs
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx1g"
+
+  config-server:
+    image: "nicolae22/config-server:1.0"
+    container_name: config-server
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URL: "https://github.com/Nikolae22/ms-air-config"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+
   service-registry:
     image: "nicolae22/service-registry:1.0"
     container_name: eureka-server
     mem_limit: 512m
     mem_reservation: 256m
     cpus: 0.5
-#    depends_on:
-#      config-server:
-#        condition: service_healthy
+    depends_on:
+      config-server:
+        condition: service_healthy
     environment:
-#      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
 #      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
     healthcheck:
@@ -196,15 +236,15 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
     #      redis:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "api-gateway"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
       #      SPRING_DATA_REDIS_HOST: redis
       #      SPRING_DATA_REDIS_PORT: 6379
@@ -220,15 +260,15 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-#      config-server:
-#        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       userdb:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "user-service"
-#      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://userdb:3306/airline_user?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -243,8 +283,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-#      config-server:
-#        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       airlinecoredb:
@@ -253,7 +293,7 @@ services:
 #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "airline-core-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://airlinecoredb:3306/airline_core_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -273,8 +313,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       flightopsdb:
@@ -283,13 +323,13 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "flight-ops-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://flightopsdb:3306/airline_flight_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
-#      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
       #      SPRING_DATA_REDIS_HOST: redis
       #      SPRING_DATA_REDIS_PORT: 6379
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
@@ -304,8 +344,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       locationdb:
@@ -314,7 +354,7 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "location-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://locationdb:3306/airline_location_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -334,8 +374,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       seatdb:
@@ -344,13 +384,13 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "seat-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://seatdb:3306/airline_seat_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
-      #      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
     restart: unless-stopped
     networks:
@@ -363,8 +403,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       pricingdb:
@@ -373,7 +413,7 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "pricing-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://pricingdb:3306/airline_pricing_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -391,8 +431,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       ancillarydb:
@@ -401,7 +441,7 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "ancillary-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://ancillarydb:3306/airline_ancillary_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -416,8 +456,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       bookingdb:
@@ -426,7 +466,7 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "booking-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://bookingdb:3306/airline_booking_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
@@ -441,8 +481,8 @@ services:
     mem_reservation: 256m
     cpus: 0.5
     depends_on:
-      #      config-server:
-      #        condition: service_healthy
+      config-server:
+        condition: service_healthy
       service-registry:
         condition: service_healthy
       paymentdb:
@@ -451,13 +491,13 @@ services:
     #        condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "payment-service"
-      #      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://paymentdb:3306/airline_payment_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASORUCE_USERNAME: root
       SPRING_DATASORUCE_PASSWORD: root
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
-      #      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVER: kafka:9092
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
 
 

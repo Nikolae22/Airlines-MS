@@ -1,0 +1,17 @@
+server:
+  port: 5006
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/airline_pricing
+    username: we
+    password: we
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    #si registra con ip adress non con hostname
+    prefer-ip-address: true
+

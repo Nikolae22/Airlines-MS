@@ -8,6 +8,9 @@ import com.locationservice.repository.CityRepository;
 import com.locationservice.service.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
+    @Cacheable(cacheNames = "cities",key = "#id")
     public CityResponse getCityById(Long id) throws Exception {
       City city=  cityRepository.findById(id)
                 .orElseThrow(()->new Exception("City not exit with given id"));
@@ -38,6 +42,10 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "cities",key = "#id"),
+            @CacheEvict(cacheNames = "citiesByCode",allEntries = true)
+    })
     public CityResponse updateCity(Long id, CityRequest request) throws Exception {
         City city=  cityRepository.findById(id)
                 .orElseThrow(()->new Exception("City not exit with given id"));
@@ -50,6 +58,10 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "cities",key = "#id"),
+            @CacheEvict(cacheNames = "citiesByCode",allEntries = true)
+    })
     public void deleteCity(Long id) throws Exception {
         City city=  cityRepository.findById(id)
                 .orElseThrow(()->new Exception("City not exit with given id"));

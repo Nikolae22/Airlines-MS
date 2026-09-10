@@ -3,6 +3,7 @@ package com.bookingservice.event.listener;
 import com.bookingservice.client.FlightClient;
 import com.bookingservice.client.PricingClient;
 import com.bookingservice.client.UserClient;
+import com.bookingservice.event.publisher.BookingEventProducer;
 import com.bookingservice.model.Booking;
 import com.bookingservice.repository.BookingRepository;
 import com.enums.BookingStatus;
@@ -14,6 +15,7 @@ import com.payload.response.FlightInstanceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +25,10 @@ public class PaymentEventListener {
     private final FlightClient flightClient;
     private final PricingClient pricingClient;
     private final UserClient userClient;
+    private final BookingEventProducer bookingEventProducer;
 
     @KafkaListener(topics = "payment.completed",groupId = "booking-service-group")
+    @Transactional
     public void handlePaymentCompleted(PaymentCompletedEvent event){
         //fetch booking
         Booking booking=bookingRepository.findById(event.getBookingId())
@@ -39,6 +43,8 @@ public class PaymentEventListener {
         UserDTO userDTO=userClient.getUserById(booking.getUserId());
 
         //publish event for seta service and notifiaction service both consume it
+        bookingEventProducer.sendBookingConfirmed(booking,event,flightInstanceResponse,
+                fareResponse,userDTO);
 
     }
 

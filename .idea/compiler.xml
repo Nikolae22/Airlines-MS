@@ -7,6 +7,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="config-server" />
         <module name="payment-service" />
         <module name="location-service" />
         <module name="booking-service" />
@@ -37,6 +38,7 @@
       <module name="ancillary-service" options="" />
       <module name="api-gateway" options="" />
       <module name="booking-service" options="" />
+      <module name="config-server" options="" />
       <module name="flight-ops-service" options="" />
       <module name="location-service" options="" />
       <module name="payment-service" options="" />
